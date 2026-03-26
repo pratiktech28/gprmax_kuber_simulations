@@ -29,12 +29,9 @@ jobs:
 
       - name: Apply Kubernetes Config
         run: |
-          # Sabse pehle storage/namespace setup
           kubectl apply -f Kubernetes/PV.yaml
           kubectl apply -f Kubernetes/PVC.yaml
-          # Fir simulation logic
           kubectl apply -f Kubernetes/main.yaml
-          # Aakhir mein aggregate karne wala job
           kubectl apply -f Kubernetes/aggregator-job.yaml
 
       - name: Wait for Aggregator Job to Finish
@@ -44,7 +41,6 @@ jobs:
       - name: Extract Results from PVC
         run: |
           mkdir -p output_zip
-          # Sabse naye pod se report copy karna
           POD_NAME=$(kubectl get pods -l app=gprmax -o jsonpath='{.items[0].metadata.name}')
           kubectl cp $POD_NAME:/data/final_performance_report.png ./output_zip/report.png
           kubectl cp $POD_NAME:/data/simulation_registry.db ./output_zip/database.db
