@@ -12,18 +12,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /gprmax
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir numpy==1.24.3 cython==0.29.36 pandas matplotlib tqdm h5py sqlalchemy
+RUN pip install --no-cache-dir numpy==1.24.3 cython==0.29.36
+RUN pip install --no-cache-dir pandas matplotlib tqdm h5py sqlalchemy
 
-RUN git clone --depth 1 https://github.com/gprMax/gprMax.git /tmp/gprmax_src && \
-    cd /tmp/gprmax_src && \
+RUN git clone --depth 1 https://github.com/gprMax/gprMax.git /opt/gprMax_src && \
+    cd /opt/gprMax_src && \
     pip install --no-build-isolation . && \
-    rm -rf /tmp/gprmax_src
+    cp -r /opt/gprMax_src/gprMax /usr/local/lib/python3.11/site-packages/
 
 COPY Python/main.py Python/aggregator.py Python/database.py ./
 COPY user_input.in ./
 
 RUN mkdir -p /data && chmod 777 /data
 
-RUN python3 -c "import gprMax; print('Bhai, Jung Jeet Gaye!')"
+RUN python3 -c "import gprMax; print('Bhai, Finally Jung Jeet Gaye!')"
 
 CMD ["python3", "main.py"]
