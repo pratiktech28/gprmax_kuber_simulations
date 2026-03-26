@@ -20,16 +20,11 @@ WORKDIR /gprmax
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir numpy==1.24.3 cython==0.29.36
+RUN pip install --no-cache-dir pandas matplotlib tqdm h5py sqlalchemy
 
 RUN git clone https://github.com/gprMax/gprMax.git . && \
-    pip install -e .
-
-RUN pip install --no-cache-dir \
-    pandas \
-    matplotlib \
-    tqdm \
-    h5py \
-    sqlalchemy
+    python setup.py build_ext --inplace && \
+    pip install .
 
 COPY Python/main.py Python/aggregator.py Python/database.py ./
 COPY user_input.in ./
