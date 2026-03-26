@@ -2,7 +2,7 @@ name: gprMax Kuber Simulation Workflow
 
 on:
   push:
-    branches: [ main ] 
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
@@ -11,21 +11,43 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t pratiktech28/gprmax:latest -f Docker/Dockerfile .
+          docker save pratiktech28/gprmax:latest > gprmax.tar
+
       - name: Set up Kubernetes (Kind Cluster)
-        uses: helm/kind-action@v1.4.0 
+        uses: helm/kind-action@v1.4.0
+        with:
+          cluster_name: gprmax-cluster
+
+      - name: Load Image into Kind
+        run: kind load image-archive gprmax.tar --name gprmax-cluster
+
       - name: Apply Kubernetes Config
         run: |
-          kubectl apply -f kubernetes/kube.yaml
-          
+          # Sabse pehle storage/namespace setup
+          kubectl apply -f Kubernetes/PV.yaml
+          kubectl apply -f Kubernetes/PVC.yaml
+          # Fir simulation logic
+          kubectl apply -f Kubernetes/main.yaml
+          # Aakhir mein aggregate karne wala job
+          kubectl apply -f Kubernetes/aggregator-job.yaml
+
       - name: Wait for Aggregator Job to Finish
         run: |
-          kubectl wait --for=condition=complete job/data-aggregator --timeout=300s
+          kubectl wait --for=condition=complete job/data-aggregator --timeout=600s
 
       - name: Extract Results from PVC
         run: |
-          # Pod se data nikal kar artifact folder mein dalna
           mkdir -p output_zip
-          kubectl cp $(kubectl get pods -l app=gprmax -o jsonpath='{.items[0].metadata.name}'):/data ./output_zip/
+          # Sabse naye pod se report copy karna
+          POD_NAME=$(kubectl get pods -l app=gprmax -o jsonpath='{.items[0].metadata.name}')
+          kubectl cp $POD_NAME:/data/final_performance_report.png ./output_zip/report.png
+          kubectl cp $POD_NAME:/data/simulation_registry.db ./output_zip/database.db
 
       - name: Upload Zip Artifact
         uses: actions/upload-artifact@v4
