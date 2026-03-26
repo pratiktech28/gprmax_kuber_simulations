@@ -3,7 +3,7 @@ FROM python:3.11-slim-bullseye
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV OMP_NUM_THREADS=4 
+ENV OMP_NUM_THREADS=4
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -21,7 +21,7 @@ WORKDIR /gprmax
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-RUN pip install --no-cache-dir cython==0.29.36 
+RUN pip install --no-cache-dir numpy cython==0.29.36
 
 RUN pip install --no-cache-dir git+https://github.com/gprMax/gprMax.git
 
