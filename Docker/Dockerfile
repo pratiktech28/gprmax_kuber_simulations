@@ -10,11 +10,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir numpy==1.24.3 cython==0.29.36 scipy scikit-learn pandas matplotlib tqdm h5py sqlalchemy
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir \
+    numpy==1.24.3 \
+    cython==0.29.36 \
+    scipy \
+    scikit-learn \
+    pandas \
+    matplotlib \
+    tqdm \
+    h5py \
+    sqlalchemy \
+    colorama \
+    terminaltables
 
-RUN git clone --depth 1 https://github.com/gprMax/gprMax.git /tmp/gprMax_folder && \
-    cp -r /tmp/gprMax_folder/gprMax ./gprMax && \
-    rm -rf /tmp/gprMax_folder
+RUN git clone --depth 1 https://github.com/gprMax/gprMax.git /tmp/gprMax_src && \
+    pip install --no-build-isolation /tmp/gprMax_src && \
+    rm -rf /tmp/gprMax_src
 
 COPY Python/main.py Python/aggregator.py Python/database.py ./
 COPY user_input.in ./
