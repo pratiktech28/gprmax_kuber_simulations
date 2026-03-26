@@ -23,16 +23,16 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir numpy==1.24.3 cython==0.29.36
 RUN pip install --no-cache-dir pandas matplotlib tqdm h5py sqlalchemy
 
-RUN git clone --depth 1 https://github.com/gprMax/gprMax.git /tmp/gprmax_src && \
-    pip install --no-build-isolation -e /tmp/gprmax_src && \
-    cp -r /tmp/gprmax_src/* /gprmax/ && \
-    rm -rf /tmp/gprmax_src
+RUN git clone --depth 1 https://github.com/gprMax/gprMax.git /gprmax_src && \
+    cd /gprmax_src && \
+    pip install --no-build-isolation -e . && \
+    cp -r /gprmax_src/* /gprmax/
 
 COPY Python/main.py Python/aggregator.py Python/database.py ./
 COPY user_input.in ./
 
 RUN mkdir -p /data && chmod 777 /data
 
-RUN python -c "import gprMax; print('gprMax installed successfully!')"
+RUN python3 -c "import gprMax; print('Bhai, Finally Install Ho Gaya!')"
 
 CMD ["python3", "main.py"]
