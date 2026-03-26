@@ -16,9 +16,9 @@ RUN pip install --no-cache-dir numpy==1.24.3 cython==0.29.36 pandas matplotlib t
 
 RUN git clone --depth 1 https://github.com/gprMax/gprMax.git /gprmax_src && \
     cd /gprmax_src && \
-    python setup.py build_ext --inplace && \
-    cp -r /gprmax_src/gprMax /usr/local/lib/python3.11/site-packages/ && \
-    cp -r /gprmax_src/* /gprmax/
+    pip install --no-build-isolation -e .
+
+ENV PYTHONPATH="/gprmax_src:${PYTHONPATH}"
 
 COPY Python/main.py Python/aggregator.py Python/database.py ./
 COPY user_input.in ./
