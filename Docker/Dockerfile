@@ -3,7 +3,6 @@ FROM python:3.11-slim-bullseye
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV OMP_NUM_THREADS=4
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -19,16 +18,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /gprmax
 
-# 1. Upgrade build tools
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-
-# 2. SEPARATE STEP: Install NumPy and Cython first
 RUN pip install --no-cache-dir numpy==1.24.3 cython==0.29.36
 
-# 3. Now install gprMax
-RUN pip install --no-cache-dir git+https://github.com/gprMax/gprMax.git
+RUN git clone https://github.com/gprMax/gprMax.git . && \
+    pip install -e .
 
-# 4. Install remaining dependencies
 RUN pip install --no-cache-dir \
     pandas \
     matplotlib \
@@ -36,7 +31,6 @@ RUN pip install --no-cache-dir \
     h5py \
     sqlalchemy
 
-# 5. Copy files
 COPY Python/main.py Python/aggregator.py Python/database.py ./
 COPY user_input.in ./
 
