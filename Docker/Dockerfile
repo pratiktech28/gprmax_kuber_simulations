@@ -32,7 +32,7 @@ RUN pip install --no-cache-dir \
     h5py \
     sqlalchemy
 
-COPY python/main.py python/aggregator.py python/database.py ./
+COPY Python/main.py Python/aggregator.py Python/database.py ./
 COPY user_input.in ./
 
 RUN mkdir -p /data && chmod 777 /data
