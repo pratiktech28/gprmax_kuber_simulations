@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gprmax-worker
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: gprmax
+  template:
+    metadata:
+      labels:
+        app: gprmax
+    spec:
+      containers:
+      - name: gprmax-container
+        image: pratiktech28/gprmax:latest 
+        command: ["python3", "-m", "gprMax", "user_input.in"]
+        volumeMounts:
+        - name: simulation-data
+          mountPath: /gprmax/output
+      volumes:
+      - name: simulation-data
+        persistentVolumeClaim:
+          claimName: gprmax-pvc

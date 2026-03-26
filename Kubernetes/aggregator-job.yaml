@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: data-aggregator
+spec:
+  template:
+    spec:
+      containers:
+      - name: aggregator
+        image: pratiktech28/aggregator:latest
+        command: ["python3", "aggregate_results.py"]
+        volumeMounts:
+        - name: simulation-data
+          mountPath: /data
+      restartPolicy: OnFailure
+      volumes:
+      - name: simulation-data
+        persistentVolumeClaim:
+          claimName: gprmax-pvc

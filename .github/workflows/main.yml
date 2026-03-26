@@ -1,0 +1,34 @@
+name: gprMax Kuber Simulation Workflow
+
+on:
+  push:
+    branches: [ main ] 
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Kubernetes (Kind Cluster)
+        uses: helm/kind-action@v1.4.0 
+      - name: Apply Kubernetes Config
+        run: |
+          kubectl apply -f kubernetes/kube.yaml
+          
+      - name: Wait for Aggregator Job to Finish
+        run: |
+          kubectl wait --for=condition=complete job/data-aggregator --timeout=300s
+
+      - name: Extract Results from PVC
+        run: |
+          # Pod se data nikal kar artifact folder mein dalna
+          mkdir -p output_zip
+          kubectl cp $(kubectl get pods -l app=gprmax -o jsonpath='{.items[0].metadata.name}'):/data ./output_zip/
+
+      - name: Upload Zip Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-results-zip
+          path: output_zip/
