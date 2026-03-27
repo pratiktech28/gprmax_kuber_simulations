@@ -34,19 +34,28 @@ jobs:
           kubectl apply -f Kubernetes/main.yaml
           kubectl apply -f Kubernetes/aggregator-job.yaml
 
+      - name: Buffer for Cluster Sync
+        run: |
+          echo "[*] Sleeping for 60 seconds... Workers ko database banane do."
+          sleep 60 
+
       - name: Wait for Aggregator Job to Finish
         run: |
+          echo "[*] Monitoring data-aggregator job..."
           kubectl wait --for=condition=complete job/data-aggregator --timeout=1800s
 
       - name: Extract Results from PVC
+        if: always() # 👈 Fail ho ya pass, data nikaalna zaroori hai!
         run: |
           mkdir -p output_zip
           POD_NAME=$(kubectl get pods -l app=gprmax -o jsonpath='{.items[0].metadata.name}')
-          kubectl cp $POD_NAME:/data/final_performance_report.png ./output_zip/report.png
-          kubectl cp $POD_NAME:/data/simulation_registry.db ./output_zip/database.db
+          echo "[+] Extracting from Pod: $POD_NAME"
+          kubectl cp $POD_NAME:/data/final_summary.csv ./output_zip/final_summary.csv || echo "Summary missing"
+          kubectl cp $POD_NAME:/data/simulation_registry.db ./output_zip/simulation_registry.db || echo "DB missing"
 
-      - name: Upload Zip Artifact
+      - name: Upload Artifacts to GitHub
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: simulation-results-zip
+          name: gprMax-Results-Attempt-31
           path: output_zip/

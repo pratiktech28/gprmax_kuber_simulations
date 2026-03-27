@@ -1,0 +1,20 @@
+#title: GSoC 2026 - gprMax Distributed Simulation
+#domain: 0.240 0.210 0.002
+#dx_dy_dz: 0.002 0.002 0.002
+#time_window: 12e-9
+
+# Medium: Dry Sand (Relative Permittivity=6, Conductivity=0.01)
+#material: 6 0.01 1 0 dry_sand
+
+# Filling the whole domain with dry_sand
+#box: 0 0 0 0.240 0.210 0.002 dry_sand
+
+#cylinder: 0.120 0.100 0 0.120 0.100 0.002 0.010 pec
+
+# Waveform: Gaussian pulse at 1.5 GHz
+#waveform: gauss 1 1.5e9 my_pulse
+#hertzian_dipole: z 0.100 0.170 0.0 my_pulse
+
+#rx: 0.140 0.170 0.0
+
+#snapshot: 0.100 0.170 0 0.140 0.170 0.002 0.002 0.002 0.002 2e-9 snapshot1
