@@ -18,4 +18,4 @@ spec:
         persistentVolumeClaim:
           claimName: gprmax-pvc
   backoffLimit: 4
-  activeDeadlineSeconds: 1800 
+  activeDeadlineSeconds: 
