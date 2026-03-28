@@ -51,11 +51,9 @@ jobs:
         mkdir -p output_zip
         echo "[*] Initializing Polling Loop for Distributed Data..."
         
-        # Increase to 60 attempts * 20s = 20 Minutes total buffer
         for i in {1..60}; do
           echo "[*] Checking for final_summary.csv... (Attempt $i/60)"
           
-          # Use the latest Pod name
           POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
           
           if [ ! -z "$POD_NAME" ] && kubectl exec $POD_NAME -- ls /data/final_summary.csv > /dev/null 2>&1; then
