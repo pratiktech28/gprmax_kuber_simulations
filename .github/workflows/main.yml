@@ -49,28 +49,23 @@ jobs:
       if: always()
       run: |
         mkdir -p output_zip
-        
         echo "[*] Initializing Polling Loop for Distributed Data..."
         
-        for i in {1..10}; do
-          echo "[*] Checking for final_summary.csv in Aggregator Pod... (Attempt $i/10)"
+        # INCREASED: 30 attempts, 20s sleep = 10 minutes buffer
+        for i in {1..30}; do
+          echo "[*] Checking for final_summary.csv... (Attempt $i/30)"
           
           if kubectl exec job/data-aggregator -- ls /data/final_summary.csv > /dev/null 2>&1; then
             echo "[+] SUCCESS: Data generated! Commencing extraction..."
-            
             POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
-            
             kubectl cp $POD_NAME:/data/final_summary.csv ./output_zip/final_summary.csv
             kubectl cp $POD_NAME:/data/simulation_registry.db ./output_zip/simulation_registry.db
-            
-            echo "[+] Extraction complete. Localizing artifacts..."
             break
           fi
           
-          echo "[!] File not found yet. Shards might be processing. Sleeping for 15s..."
-          sleep 15
+          echo "[!] Simulation still in progress. Sleeping for 20s..."
+          sleep 20
         done
-
     - name: Upload Artifacts
       if: always()
       uses: actions/upload-artifact@v4
