@@ -46,30 +46,36 @@ jobs:
         kubectl logs job/data-aggregator || echo "Logs not available yet"
 
     - name: Extract Results (The Shield)
-      if: always()
+      if: success()
       run: |
         mkdir -p output_zip
         echo "[*] Initializing Polling Loop for Distributed Data..."
         
-        # 30 minute ka patience (90 attempts)
-        for i in {1..90}; do
-          echo "[*] Checking for final_summary.csv... (Attempt $i/90)"
+        for i in {1..120}; do
+          echo "[*] Checking for final_summary.csv... (Attempt $i/120)"
           
           POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
           
           if [ ! -z "$POD_NAME" ] && kubectl exec $POD_NAME -- ls /data/final_summary.csv > /dev/null 2>&1; then
             echo "[+] SUCCESS: Data found! Commencing extraction..."
+            
             kubectl cp $POD_NAME:/data/final_summary.csv ./output_zip/final_summary.csv
             kubectl cp $POD_NAME:/data/simulation_registry.db ./output_zip/simulation_registry.db
-            break
+            
+            echo "[+] Extraction Complete. Files staged for upload."
+            exit 0
           fi
           
-          echo "[!] Simulation still in progress. Sleeping for 20s..."
+          echo "[!] Simulation still in progress or database locked. Sleeping for 20s..."
           sleep 20
         done
-    - name: Upload Artifacts
-      if: always()
+
+        echo "[-] ERROR: Timeout reached after 120 attempts. Artifacts not found."
+        exit 1
+
+    - name: 📦 Upload Simulation Artifacts
+      if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: GSoC-Final-Results
+        name: gprmax-simulation-results
         path: output_zip/
