@@ -11,7 +11,7 @@ def run_aggregation():
     print("[*] Aggregator started. Searching for database...")
 
     found = False
-    for i in range(20):
+    for i in range(40):
         if os.path.exists(db_path):
             print(f"[+] Database found after {i*30} seconds!")
             found = True
@@ -26,8 +26,7 @@ def run_aggregation():
     # --- 📊 Data Processing ---
     try:
         conn = sqlite3.connect(db_path)
-        df = pd.read_sql_query("SELECT * FROM simulations", conn)
-
+        df = pd.read_sql_query("SELECT * FROM results", conn)
         if df.empty:
             print("[!] Database is empty. Nothing to aggregate.")
             df.to_csv(output_path)
