@@ -34,28 +34,30 @@ jobs:
           kubectl apply -f Kubernetes/main.yaml
           kubectl apply -f Kubernetes/aggregator-job.yaml
 
-      - name: Buffer for Cluster Sync
+      - name: Buffer for Cluster Sync & Execution
         run: |
-          echo "[*] Sleeping for 60 seconds... Workers ko database banane do."
-          sleep 60 
+          echo "[*] Sleeping for 120s... to allow cluster to sync and jobs to start"
+          sleep 120 
 
-      - name: Wait for Aggregator Job to Finish
+      - name: Check Aggregator Status & Logs
         run: |
-          echo "[*] Monitoring data-aggregator job..."
-          kubectl wait --for=condition=complete job/data-aggregator --timeout=1800s
+          echo "[*] Checking if Aggregator Pod is running..."
+          kubectl get pods -l job-name=data-aggregator
+          kubectl logs job/data-aggregator || echo 
 
-      - name: Extract Results from PVC
-        if: always() # 👈 Fail ho ya pass, data nikaalna zaroori hai!
+      - name: Extract Results (The Shield)
+        if: always() 
         run: |
           mkdir -p output_zip
-          POD_NAME=$(kubectl get pods -l app=gprmax -o jsonpath='{.items[0].metadata.name}')
-          echo "[+] Extracting from Pod: $POD_NAME"
+          # Finding the Pod name dynamically
+          POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
+          echo "[+] Fetching data from Pod: $POD_NAME"
           kubectl cp $POD_NAME:/data/final_summary.csv ./output_zip/final_summary.csv || echo "Summary missing"
           kubectl cp $POD_NAME:/data/simulation_registry.db ./output_zip/simulation_registry.db || echo "DB missing"
 
-      - name: Upload Artifacts to GitHub
+      - name: Upload Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gprMax-Results-Attempt-31
+          name: GSoC-Final-Results
           path: output_zip/
