@@ -51,13 +51,15 @@ jobs:
         mkdir -p output_zip
         echo "[*] Initializing Polling Loop for Distributed Data..."
         
-        # INCREASED: 30 attempts, 20s sleep = 10 minutes buffer
-        for i in {1..30}; do
-          echo "[*] Checking for final_summary.csv... (Attempt $i/30)"
+        # Increase to 60 attempts * 20s = 20 Minutes total buffer
+        for i in {1..60}; do
+          echo "[*] Checking for final_summary.csv... (Attempt $i/60)"
           
-          if kubectl exec job/data-aggregator -- ls /data/final_summary.csv > /dev/null 2>&1; then
-            echo "[+] SUCCESS: Data generated! Commencing extraction..."
-            POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
+          # Use the latest Pod name
+          POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
+          
+          if [ ! -z "$POD_NAME" ] && kubectl exec $POD_NAME -- ls /data/final_summary.csv > /dev/null 2>&1; then
+            echo "[+] SUCCESS: Data found! Commencing extraction..."
             kubectl cp $POD_NAME:/data/final_summary.csv ./output_zip/final_summary.csv
             kubectl cp $POD_NAME:/data/simulation_registry.db ./output_zip/simulation_registry.db
             break
