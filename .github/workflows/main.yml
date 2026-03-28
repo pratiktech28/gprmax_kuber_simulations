@@ -51,8 +51,9 @@ jobs:
         mkdir -p output_zip
         echo "[*] Initializing Polling Loop for Distributed Data..."
         
-        for i in {1..60}; do
-          echo "[*] Checking for final_summary.csv... (Attempt $i/60)"
+        # 30 minute ka patience (90 attempts)
+        for i in {1..90}; do
+          echo "[*] Checking for final_summary.csv... (Attempt $i/90)"
           
           POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
           

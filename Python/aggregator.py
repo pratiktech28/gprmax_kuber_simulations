@@ -11,7 +11,7 @@ def run_aggregation():
     print("[*] Aggregator started. Searching for database...")
 
     found = False
-    for i in range(40):
+    for i in range(120):
         if os.path.exists(db_path):
             print(f"[+] Database found after {i*30} seconds!")
             found = True
