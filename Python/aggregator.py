@@ -1,8 +1,8 @@
-import pandas as pd
-import sqlite3
 import os
 import time
 import sys
+import sqlite3
+import pandas as pd
 
 def run_aggregation():
     db_path = '/data/simulation_registry.db'
@@ -27,23 +27,27 @@ def run_aggregation():
     try:
         conn = sqlite3.connect(db_path)
         df = pd.read_sql_query("SELECT * FROM simulations", conn)
-        
+
         if df.empty:
             print("[!] Database is empty. Nothing to aggregate.")
-            df.to_csv(output_path) 
+            df.to_csv(output_path)
         else:
             summary = df.describe()
             summary.to_csv(output_path)
             print(f"[+] Aggregation successful. Saved to {output_path}")
 
         conn.close()
-        
-        # --- ✅ EXIT SIGNAL ---
+
+        # --- ✅ FINAL SUCCESS SIGNAL & GRACE PERIOD ---
         print("[***] JOB COMPLETED SUCCESSFULLY [***]")
+        print("[*] Sleeping for 60s to allow GitHub to extract artifacts...")
+        
+        time.sleep(60) 
         sys.exit(0)
 
     except Exception as e:
         print(f"[-] Error during processing: {e}")
+        time.sleep(10)
         sys.exit(1)
 
 if __name__ == "__main__":
