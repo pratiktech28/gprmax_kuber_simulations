@@ -7,15 +7,15 @@ spec:
     spec:
       containers:
       - name: aggregator
-        image: pratiktech28/aggregator:latest
-        command: ["python3", "aggregator.py"] 
+        image: pratiktech28/gprmax:latest  
+        command: ["python3", "aggregator.py"]
+        imagePullPolicy: Never            
         volumeMounts:
-        - name: data-storage
+        - name: data-volume
           mountPath: /data
-      restartPolicy: OnFailure
+      restartPolicy: Never
       volumes:
-      - name: data-storage
+      - name: data-volume
         persistentVolumeClaim:
           claimName: gprmax-pvc
-  backoffLimit: 4
-  activeDeadlineSeconds: 1800
+  backoffLimit: 2
