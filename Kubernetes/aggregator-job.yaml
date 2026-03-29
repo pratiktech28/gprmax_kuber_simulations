@@ -1,32 +1,20 @@
-name: gprMax Automation Phase 2
-
-on:
-  push:
-    branches: [ fix/automation-actions ]
-
-jobs:
-  infrastructure-and-build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Kubernetes (Kind)
-        uses: engineerd/setup-kind@v0.5.0
-        with:
-          version: "v0.20.0"
-
-      - name: Verify Cluster Ready
-        run: |
-          kubectl cluster-info
-          kubectl get nodes
-
-      - name: Build gprMax Docker Image
-        run: |
-          # Phase 1 ka Dockerfile use kar rahe hain
-          docker build -t gprmax-simulation:latest -f Docker/Dockerfile .
-
-      - name: Load Image into Cluster
-        run: |
-          # Default cluster name 'kind' hota hai is action mein
-          kind load docker-image gprmax-simulation:latest --name kind
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: data-aggregator
+spec:
+  template:
+    spec:
+      containers:
+        - name: aggregator
+          image: gprmax-simulation:latest
+          imagePullPolicy: Never
+          command: ["python3", "Python/aggregator.py"]
+          volumeMounts:
+            - name: data-volume
+              mountPath: /data
+      restartPolicy: Never
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: gprmax-pvc
