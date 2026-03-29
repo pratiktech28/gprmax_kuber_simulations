@@ -28,16 +28,22 @@ jobs:
           
       - name: Wait for Completion
         run: |
-          # Simulations ko time do khatam hone ka (Indori patience!)
           echo "Waiting for simulations to finish..."
-          sleep 120 
+          sleep 120
           kubectl get pods
+
+      - name: Export Results from Cluster
+        run: |
+          mkdir -p Python/results
+          
+          POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
+          echo "Copying from Pod: $POD_NAME"
+          
+          kubectl cp $POD_NAME:/data/simulation_registry.db ./Python/results/simulation_registry.db || echo "DB not found"
+          kubectl cp $POD_NAME:/data/final_summary.csv ./Python/results/final_summary.csv || echo "CSV not found"
 
       - name: Collect Results (Artifacts)
         uses: actions/upload-artifact@v4
         with:
-          name: gprmax-simulation-results
-          path: |
-            Python/*.db
-            Python/output/
-            # Jo bhi paths tune aggregator.py mein diye hain
+          name: gprMax-Data-Results
+          path: Python/results/
