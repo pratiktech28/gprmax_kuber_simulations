@@ -16,11 +16,12 @@ def run_aggregation():
             print(f"[+] Database found after {i*30} seconds!")
             found = True
             break
-        print(f"[*] Database not ready yet... Retrying ({i+1}/160)")
+        print(f"[*] Database not ready yet... Retrying ({i+1}/200)")
         time.sleep(30)
 
     if not found:
         print("[-] FATAL: Database file never appeared. Check worker pods.")
+
         sys.exit(1)
 
     # --- 📊 Data Processing ---
