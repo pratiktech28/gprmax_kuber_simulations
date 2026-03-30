@@ -5,8 +5,8 @@ import sys
 import os
 
 def run_aggregation():
-    db_path = "/data/simulation_registry.db"
-    output_path = "/data/final_summary.csv"
+    db_path = "simulation_registry.db"
+    output_path = "final_summary.csv"
     
     try:
         print("[*] Starting data aggregation...")
