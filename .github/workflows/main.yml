@@ -41,7 +41,7 @@ jobs:
           echo "Copying from Pod: $POD_NAME"
           
           kubectl cp $POD_NAME:simulation_registry.db ./results_temp/simulation_registry.db
-          kubectl cp $POD_NAME:final_summary.csv ./results_temp/final_summary.csv
+          kubectl cp $POD_NAME:final_summary.csv ./results_temp/final_summary.csv   
           
           ls -l ./results_temp/
       - name: Upload Artifacts
