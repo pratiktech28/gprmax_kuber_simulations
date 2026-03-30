@@ -34,17 +34,18 @@ jobs:
 
       - name: Export Results from Cluster
         run: |
-          mkdir -p ./Python/results
+          rm -rf results_temp
+          mkdir -p results_temp
           
           POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
-          echo "Targeting Pod: $POD_NAME"
+          echo "Copying from Pod: $POD_NAME"
           
-          kubectl cp $POD_NAME:/data/simulation_registry.db ./Python/results/simulation_registry.db
-          kubectl cp $POD_NAME:/data/final_summary.csv ./Python/results/final_summary.csv
+          kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db
+          kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv
           
-          ls -R ./Python/results/
-      - name: Upload Artifacts to GitHub
+          ls -l ./results_temp/
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: gprMax-Data-Results
-          path: Python/results/
+          name: simulation-results
+          path: results_temp/    
