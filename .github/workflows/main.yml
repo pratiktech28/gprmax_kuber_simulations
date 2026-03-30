@@ -49,3 +49,4 @@ jobs:
         with:
           name: simulation-results
           path: results_temp/    
+          if-no-files-found: error 
