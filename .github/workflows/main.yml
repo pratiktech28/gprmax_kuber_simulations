@@ -37,10 +37,10 @@ jobs:
           mkdir -p results_temp
           POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
           
-          kubectl exec $POD_NAME -- ls -l /app/ 
+          kubectl cp $POD_NAME:/app/simulation_registry.db ./results_temp/simulation_registry.db
+          kubectl cp $POD_NAME:/app/final_summary.csv ./results_temp/final_summary.csv
           
-          kubectl cp $POD_NAME:simulation_registry.db ./results_temp/simulation_registry.db || echo "DB not found in root"
-          kubectl cp $POD_NAME:final_summary.csv ./results_temp/final_summary.csv || echo "CSV not found in root"
+          ls -la results_temp/
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
