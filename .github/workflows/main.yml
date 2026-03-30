@@ -34,7 +34,7 @@ jobs:
 
       - name: Export Results from Cluster
         run: |
-          mkdir -p Python/results
+          kubectl logs -l job-name=data-aggregator --tail=20
           
           POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
           echo "Connected to Pod: $POD_NAME"
