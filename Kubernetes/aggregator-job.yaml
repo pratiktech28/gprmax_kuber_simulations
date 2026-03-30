@@ -9,7 +9,7 @@ spec:
         - name: aggregator
           image: gprmax-simulation:latest
           imagePullPolicy: Never
-          command: ["python3", "Python/aggregator.py"]
+          command: ["python3", "aggregator.py"]
           volumeMounts:
             - name: data-volume
               mountPath: /data

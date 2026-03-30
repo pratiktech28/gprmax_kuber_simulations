@@ -41,10 +41,9 @@ def run_aggregation():
 
     except Exception as e:
         print(f"FAILED BUT STAYING ALIVE: {e}")
-
     finally:
-        
-        print("[*] Entering Grace Period: Holding pod for 200s for artifact extraction...")
+        print("[*] Entering Grace Period: Holding pod for 200s...")
+        import time # Safety import
         time.sleep(200)
 
         if 'e' in locals():
