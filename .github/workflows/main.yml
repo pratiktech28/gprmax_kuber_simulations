@@ -37,12 +37,16 @@ jobs:
           mkdir -p Python/results
           
           POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
-          echo "Copying from Pod: $POD_NAME"
+          echo "Connected to Pod: $POD_NAME"
           
-          kubectl cp $POD_NAME:/data/simulation_registry.db ./Python/results/simulation_registry.db || echo "DB not found"
-          kubectl cp $POD_NAME:/data/final_summary.csv ./Python/results/final_summary.csv || echo "CSV not found"
+          kubectl get pod $POD_NAME
+          
+          kubectl cp $POD_NAME:/data/simulation_registry.db ./Python/results/simulation_registry.db || echo "DB missing"
+          kubectl cp $POD_NAME:/data/final_summary.csv ./Python/results/final_summary.csv || echo "CSV missing"
+          
+          echo "Artifacts pulled from Pod successfully!"
 
-      - name: Collect Results (Artifacts)
+      - name: Upload Artifacts to GitHub
         uses: actions/upload-artifact@v4
         with:
           name: gprMax-Data-Results

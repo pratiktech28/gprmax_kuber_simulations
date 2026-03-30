@@ -40,9 +40,9 @@ def run_aggregation():
 
         # --- ✅ FINAL SUCCESS SIGNAL & GRACE PERIOD ---
         print("[***] JOB COMPLETED SUCCESSFULLY [***]")
-        print("[*] Sleeping for 60s to allow GitHub to extract artifacts...")
+        print("[*] Sleeping for 180s to allow GitHub to extract artifacts...")
         
-        time.sleep(60) 
+        time.sleep(200) 
         sys.exit(0)
 
     except Exception as e:
