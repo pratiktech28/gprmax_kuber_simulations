@@ -34,18 +34,15 @@ jobs:
 
       - name: Export Results from Cluster
         run: |
-          kubectl logs -l job-name=data-aggregator --tail=20
+          mkdir -p ./Python/results
           
           POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
-          echo "Connected to Pod: $POD_NAME"
+          echo "Targeting Pod: $POD_NAME"
           
-          kubectl get pod $POD_NAME
+          kubectl cp $POD_NAME:/data/simulation_registry.db ./Python/results/simulation_registry.db
+          kubectl cp $POD_NAME:/data/final_summary.csv ./Python/results/final_summary.csv
           
-          kubectl cp $POD_NAME:/data/simulation_registry.db ./Python/results/simulation_registry.db || echo "DB missing"
-          kubectl cp $POD_NAME:/data/final_summary.csv ./Python/results/final_summary.csv || echo "CSV missing"
-          
-          echo "Artifacts pulled from Pod successfully!"
-
+          ls -R ./Python/results/
       - name: Upload Artifacts to GitHub
         uses: actions/upload-artifact@v4
         with:
