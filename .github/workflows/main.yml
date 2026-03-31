@@ -1,59 +1,49 @@
-name: gprMax Automation Phase 3
-
-on:
-  push:
-    branches: [ fix/automation-actions ]
+name: gprMax K8s CI
+on: [push]
 
 jobs:
-  full-simulation-run:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Kubernetes (Kind)
+      - name: Set up Kubernetes (Kind)
         uses: engineerd/setup-kind@v0.5.0
         with:
           version: "v0.20.0"
 
-      - name: Build & Load Image
+      - name: Build Docker Image
         run: |
-          docker build -t gprmax-simulation:latest -f Docker/Dockerfile .
+          docker build -t gprmax-simulation:latest .
+          echo "Bhai, Jung Jeet Gaye!"
+
+      - name: Load Image into Kind Cluster
+        run: |
+          # 🎯 FIX: Default cluster name 'kind' hota hai
           kind load docker-image gprmax-simulation:latest --name kind
 
-      - name: Deploy 10 Pods & Aggregator
+      - name: Deploy Infrastructure
         run: |
-          # Maan raha hoon ki teri files 'k8s/' folder mein hain
-          kubectl apply -f Kubernetes/
+          kubectl apply -f Kubernetes/  # Tere folder structure ke hisab se
           
-      - name: Wait for Completion
-        run: |
-          echo "Waiting for simulations to finish..."
-          sleep 180
-          kubectl get pods
+          echo "Waiting for aggregator to finish..."
+          # 🎯 FIX: Wait taaki artifacts generate ho jayein
+          kubectl wait --for=condition=complete job/data-aggregator --timeout=300s
 
-      - name: Extract Artifacts from /app
+      - name: Extract Artifacts from /data (FIXED PATH)
         run: |
           mkdir -p results_temp
+          POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
           
-          sleep 5 
+          echo "Found Pod: $POD_NAME"
+          # 🎯 CRITICAL FIX: Python code /data mein save kar raha hai [image_3b78c7.png]
+          kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db
           
-          POD_NAME=$(kubectl get pods -l job-name=data-aggregator --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
-          
-          if [ -z "$POD_NAME" ]; then
-            echo 
-            exit 1
-          fi
-          
-          echo "✅ Found Pod: $POD_NAME"
-          kubectl cp $POD_NAME:/app/simulation_registry.db ./results_temp/simulation_registry.db
-          kubectl cp $POD_NAME:/app/final_summary.csv ./results_temp/final_summary.csv
-          
-          echo "🚀 Artifacts extracted to results_temp/"
           ls -la results_temp/
 
-      - name: Upload Artifacts
+      - name: Upload Results
         uses: actions/upload-artifact@v4
         with:
-          name: gprMax-Simulation-Results
+          name: GSoC-Simulation-Results
           path: results_temp/

@@ -6,15 +6,15 @@ spec:
   template:
     spec:
       containers:
-        - name: aggregator
-          image: gprmax-simulation:latest
-          imagePullPolicy: Never
-          command: ["python3", "aggregator.py"]
-          volumeMounts:
-            - name: data-volume
-              mountPath: /data
+      - name: aggregator
+        image: gprmax-simulation:latest
+        imagePullPolicy: IfNotPresent  
+        volumeMounts:
+        - name: storage
+          mountPath: /data 
       restartPolicy: Never
       volumes:
-        - name: data-volume
-          persistentVolumeClaim:
-            claimName: gprmax-pvc
+      - name: storage
+        persistentVolumeClaim:
+          claimName: gprmax-pvc
+---
