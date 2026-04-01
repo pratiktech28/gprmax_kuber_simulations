@@ -39,12 +39,17 @@ jobs:
       - name: Extract Results from Pod
         run: |
           mkdir -p results_temp
-          POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
-          kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db
-          kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv
+          
+          POD_NAME=$(kubectl get pods -l job-name=data-aggregator --no-headers -o custom-columns=":metadata.name" | head -n 1)
+          
+          echo "Found Pod: $POD_NAME"
+          
+          kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db || echo "DB Copy Failed"
+          kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv || echo "CSV Copy Failed"
 
       - name: Upload Final Results
         uses: actions/upload-artifact@v4
         with:
-          name: GSoC-Final-Simulation-v60
+          name: GSoC-Final-Simulation-Results
           path: results_temp/
+          if-no-files-found: error
