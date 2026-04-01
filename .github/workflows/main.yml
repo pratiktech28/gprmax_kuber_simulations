@@ -3,6 +3,7 @@ name: gprMax-Kuber-Automation
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -16,37 +17,34 @@ jobs:
         with:
           cluster_name: gprmax-automation
 
-      - name: Build Docker Image
+      - name: Build Simulation Image
         run: |
           docker build -t gprmax-simulation:latest .
 
       - name: Load Image and Set Context
         run: |
-          # Terminal ko rasta dikhao (Context Fix)
           kind export kubeconfig --name gprmax-automation
           
-          # Image ko cluster ke 'pet' mein daalo (Kind Load)
           kind load docker-image gprmax-simulation:latest --name gprmax-automation
           
-          # Check connectivity (Sirf tasalli ke liye)
           kubectl cluster-info
+          docker exec gprmax-automation-control-plane crictl images | grep gprmax
 
       - name: Deploy gprMax
         run: |
-          kubectl apply -f Kubernetes/  # Tere folder structure ke hisab se
-          echo "Waiting for aggregator to finish..."
-          # FIX: Wait taaki artifacts generate ho jayein
+          kubectl apply -f Kubernetes/
+          echo "Waiting for Physics Simulation to complete..."
           kubectl wait --for=condition=complete job/data-aggregator --timeout=300s
 
-      - name: Extract Artifacts from data (FIXED PATH)
+      - name: Extract Results from Pod
         run: |
           mkdir -p results_temp
           POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
           kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db
           kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv
 
-      - name: Upload Results
+      - name: Upload Final Results
         uses: actions/upload-artifact@v4
         with:
-          name: GSoC-Simulation-Results
+          name: GSoC-Final-Simulation-v60
           path: results_temp/
