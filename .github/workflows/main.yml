@@ -2,7 +2,7 @@ name: gprMax-Kuber-Automation
 
 on:
   push:
-    branches: [ main ]
+    branches: [ fix/automation-actions ]
   workflow_dispatch:
 
 jobs:
