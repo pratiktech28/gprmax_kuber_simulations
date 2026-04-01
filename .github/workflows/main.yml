@@ -1,5 +1,8 @@
-name: gprMax K8s CI
-on: [push]
+name: gprMax-Kuber-Automation
+
+on:
+  push:
+    branches: [ main ]
 
 jobs:
   build-and-test:
@@ -8,39 +11,39 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Kubernetes (Kind)
-        uses: engineerd/setup-kind@v0.5.0
+      - name: Create Kind Cluster
+        uses: helm/kind-action@v1.4.0
         with:
-          version: "v0.20.0"
+          cluster_name: gprmax-automation
 
       - name: Build Docker Image
         run: |
           docker build -t gprmax-simulation:latest .
-          echo "Bhai, Jung Jeet Gaye!"
 
-      - name: Load Image into Kind Cluster
+      - name: Load Image and Set Context
         run: |
-          # 🎯 FIX: Default cluster name 'kind' hota hai
-          kind load docker-image gprmax-simulation:latest --name kind
+          # Terminal ko rasta dikhao (Context Fix)
+          kind export kubeconfig --name gprmax-automation
+          
+          # Image ko cluster ke 'pet' mein daalo (Kind Load)
+          kind load docker-image gprmax-simulation:latest --name gprmax-automation
+          
+          # Check connectivity (Sirf tasalli ke liye)
+          kubectl cluster-info
 
-      - name: Deploy Infrastructure
+      - name: Deploy gprMax
         run: |
           kubectl apply -f Kubernetes/  # Tere folder structure ke hisab se
-          
           echo "Waiting for aggregator to finish..."
-          # 🎯 FIX: Wait taaki artifacts generate ho jayein
+          # FIX: Wait taaki artifacts generate ho jayein
           kubectl wait --for=condition=complete job/data-aggregator --timeout=300s
 
-      - name: Extract Artifacts from /data (FIXED PATH)
+      - name: Extract Artifacts from data (FIXED PATH)
         run: |
           mkdir -p results_temp
           POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
-          
-          echo "Found Pod: $POD_NAME"
-          # 🎯 CRITICAL FIX: Python code /data mein save kar raha hai [image_3b78c7.png]
           kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db
-          
-          ls -la results_temp/
+          kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv
 
       - name: Upload Results
         uses: actions/upload-artifact@v4
