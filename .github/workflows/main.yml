@@ -19,7 +19,7 @@ jobs:
 
       - name: Build Simulation Image
         run: |
-          docker build -t gprmax-simulation:latest .
+          docker build -t gprmax-simulation:latest -f Docker/Dockerfile .
 
       - name: Load Image and Set Context
         run: |
