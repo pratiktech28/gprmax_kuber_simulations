@@ -39,13 +39,11 @@ jobs:
         run: |
           mkdir -p results_temp
           POD_NAME=$(kubectl get pods -l job-name=data-aggregator --no-headers -o custom-columns=":metadata.name" | head -n 1)
-          
           echo "Targeting Pod: $POD_NAME"
           
-          kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db
-          kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv
+          kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db -c aggregator
+          kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv -c aggregator
           
-
           ls -lh results_temp/
 
       - name: Upload Results
