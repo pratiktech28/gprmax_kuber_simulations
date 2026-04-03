@@ -36,20 +36,20 @@ jobs:
           echo "Waiting for Physics Simulation to complete..."
           kubectl wait --for=condition=complete job/data-aggregator --timeout=300s
 
-      - name: Extract Results from Pod
+      - name: Force Extract Artifacts
         run: |
-         mkdir -p results_temp
-         sleep 15
-         POD_NAME=$(kubectl get pods -l job-name=data-aggregator --no-headers -o custom-columns=":metadata.name" | head -n 1)
-         echo "Found Pod: $POD_NAME"
-        
-         kubectl cp $POD_NAME:/data/. ./results_temp/ || echo 
-        
-         echo "Listing extracted files:"
-         ls -R results_temp/
-      - name: Upload Final Results
+          mkdir -p results_temp
+          POD_NAME=$(kubectl get pods -l job-name=data-aggregator --no-headers -o custom-columns=":metadata.name" | head -n 1)
+          
+          echo "Targeting Pod: $POD_NAME"
+          
+          kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db
+          kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv
+          
+          ls -lh results_temp/
+
+      - name: Upload Results
         uses: actions/upload-artifact@v4
         with:
-          name: GSoC-Final-Simulation-Results
+          name: GSoC-Final-Artifacts
           path: results_temp/
-          if-no-files-found: error

@@ -31,8 +31,8 @@ def run_aggregation():
         print(f"FAILED BUT STAYING ALIVE: {e}")
 
     finally:
-        print("[*] Entering Grace Period: Holding pod for 200s for artifact extraction...")
-        time.sleep(200) 
+        print("Simulation done. Waiting 10 minutes for Pratik to pull artifacts...")
+        time.sleep(600)
         
         # Check if we should exit with error or success
         if 'e' in locals():
