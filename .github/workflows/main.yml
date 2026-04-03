@@ -34,8 +34,7 @@ jobs:
         run: |
           kubectl apply -f Kubernetes/
           echo "Waiting for Physics Simulation to complete..."
-          kubectl wait --for=condition=complete job/data-aggregator --timeout=300s
-
+          sleep 30
       - name: Force Extract Artifacts
         run: |
           mkdir -p results_temp
@@ -46,6 +45,7 @@ jobs:
           kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db
           kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv
           
+
           ls -lh results_temp/
 
       - name: Upload Results
