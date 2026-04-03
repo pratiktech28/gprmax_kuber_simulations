@@ -8,7 +8,7 @@ spec:
       containers:
       - name: aggregator
         image: gprmax-simulation:latest
-        imagePullPolicy: IfNotPresent  
+        imagePullPolicy: Always  
         volumeMounts:
         - name: storage
           mountPath: /data 

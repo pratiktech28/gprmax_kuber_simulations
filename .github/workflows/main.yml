@@ -34,7 +34,7 @@ jobs:
         run: |
           kubectl apply -f Kubernetes/
           echo "Waiting for Physics Simulation to complete..."
-          sleep 30
+          sleep 90
       - name: Force Extract Artifacts
         run: |
           mkdir -p results_temp
