@@ -2,7 +2,7 @@ name: gprMax-Kuber-Automation
 
 on:
   push:
-    branches: [ fix/automation-actions ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -23,34 +23,51 @@ jobs:
 
       - name: Load Image and Set Context
         run: |
-          kind export kubeconfig --name gprmax-automation
-          
           kind load docker-image gprmax-simulation:latest --name gprmax-automation
-          
           kubectl cluster-info
-          docker exec gprmax-automation-control-plane crictl images | grep gprmax
 
       - name: Deploy gprMax
         run: |
           kubectl apply -f Kubernetes/
-          echo "Waiting for Physics Simulation to complete..."
-          sleep 90
-      - name: Force Extract Artifacts
-        run: |
-         mkdir -p results_temp
-         POD_NAME=$(kubectl get pods -l job-name=data-aggregator --no-headers -o custom-columns=":metadata.name" | head -n 1)
-         echo "Targeting Pod: $POD_NAME"
-        
-         kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db || echo "DB fetch failed"
-         kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv || echo "CSV fetch failed"
-        
-         if [ ! -f ./results_temp/simulation_registry.db ]; then
-           echo "Using fallback exec method..."
-           kubectl exec $POD_NAME -- cat /data/simulation_registry.db > ./results_temp/simulation_registry.db
-           kubectl exec $POD_NAME -- cat /data/final_summary.csv > ./results_temp/final_summary.csv
-         fi
+          echo "Waiting for Simulation to initialize..."
+          sleep 60 
 
-         ls -lh results_temp/
+      - name: Final Smash - Extract from PVC
+        run: |
+          mkdir -p results_temp
+          
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: artifact-exporter
+          spec:
+            containers:
+            - name: exporter
+              image: busybox
+              command: ["/bin/sh", "-c", "sleep 3600"]
+              volumeMounts:
+              - name: storage
+                mountPath: /data
+            volumes:
+            - name: storage
+              persistentVolumeClaim:
+                claimName: gprmax-pvc
+            restartPolicy: Never
+          EOF
+
+          echo "Waiting for exporter pod..."
+          kubectl wait --for=condition=Ready pod/artifact-exporter --timeout=90s
+
+          echo "Pulling artifacts from PVC..."
+          kubectl cp artifact-exporter:/data/simulation_registry.db ./results_temp/simulation_registry.db
+          kubectl cp artifact-exporter:/data/final_summary.csv ./results_temp/final_summary.csv
+          
+          kubectl delete pod artifact-exporter
+          
+          echo "Final Artifact Check:"
+          ls -lh results_temp/
+
       - name: Upload Results
         uses: actions/upload-artifact@v4
         with:
