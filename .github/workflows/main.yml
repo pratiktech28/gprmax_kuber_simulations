@@ -37,18 +37,20 @@ jobs:
           sleep 90
       - name: Force Extract Artifacts
         run: |
-          mkdir -p results_temp
-          POD_NAME=$(kubectl get pods -l job-name=data-aggregator --no-headers -o custom-columns=":metadata.name" | head -n 1)
-          echo "Targeting Pod: $POD_NAME"
-          
-          CONTAINER_NAME=$(kubectl get pod $POD_NAME -o jsonpath='{.spec.containers[0].name}')
-          echo "Container Name: $CONTAINER_NAME"
-          
-          kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db -c $CONTAINER_NAME
-          kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv -c $CONTAINER_NAME
-          
-          ls -lh results_temp/
+         mkdir -p results_temp
+         POD_NAME=$(kubectl get pods -l job-name=data-aggregator --no-headers -o custom-columns=":metadata.name" | head -n 1)
+         echo "Targeting Pod: $POD_NAME"
+        
+         kubectl cp $POD_NAME:/data/simulation_registry.db ./results_temp/simulation_registry.db || echo "DB fetch failed"
+         kubectl cp $POD_NAME:/data/final_summary.csv ./results_temp/final_summary.csv || echo "CSV fetch failed"
+        
+         if [ ! -f ./results_temp/simulation_registry.db ]; then
+           echo "Using fallback exec method..."
+           kubectl exec $POD_NAME -- cat /data/simulation_registry.db > ./results_temp/simulation_registry.db
+           kubectl exec $POD_NAME -- cat /data/final_summary.csv > ./results_temp/final_summary.csv
+         fi
 
+         ls -lh results_temp/
       - name: Upload Results
         uses: actions/upload-artifact@v4
         with:
