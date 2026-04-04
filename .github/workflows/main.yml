@@ -32,7 +32,7 @@ jobs:
           echo "Waiting for Simulation to initialize..."
           sleep 60 
 
-      - name: Final Smash - Scan and Extract from PVC
+      - name: Final Smash - Scan and Force Extract
         run: |
           mkdir -p results_temp
           
@@ -56,18 +56,20 @@ jobs:
             restartPolicy: Never
           EOF
 
+          echo "Waiting for exporter pod..."
           kubectl wait --for=condition=Ready pod/artifact-exporter --timeout=90s
 
-          echo "Scanning PVC for files..."
-          kubectl exec artifact-exporter -- find /data_mount -name "*.db" -o -name "*.csv"
+          echo "Scanning PVC for any .db or .csv files..."
+          kubectl exec artifact-exporter -- chmod -R 777 /data_mount
+          kubectl exec artifact-exporter -- ls -R /data_mount
           
-          echo "Pulling all data from PVC..."
-          kubectl cp artifact-exporter:/data_mount/ ./results_temp/
+          echo "Copying entire data directory to avoid path errors..."
+          kubectl cp artifact-exporter:/data_mount/ ./results_temp/ || echo "Copy failed but continuing..."
           
           kubectl delete pod artifact-exporter
           
-          echo "Final Folder Structure Check:"
-          ls -R results_temp/
+          echo "Files Found in Runner:"
+          find ./results_temp -type f
       - name: Upload Results
         uses: actions/upload-artifact@v4
         with:
