@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: gprmax-container
-        image: pratiktech28/gprmax:latest 
+        image: gprmax-simulation:latest
         command: ["python3", "-m", "gprMax", "user_input.in"]
         volumeMounts:
         - name: simulation-data

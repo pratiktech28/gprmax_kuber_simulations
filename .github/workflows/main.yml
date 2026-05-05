@@ -1,81 +1,77 @@
-name: gprMax Kuber Simulation Workflow
+name: gprMax-Kuber-Automation
 
 on:
   push:
-    branches: [ main ]
+    branches: [ fix/automation-actions ]
+  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Create Kind Cluster
+        uses: helm/kind-action@v1.4.0
+        with:
+          cluster_name: gprmax-automation
 
-    - name: Build Docker Image
-      run: |
-        docker build -t pratiktech28/gprmax:latest -f Docker/Dockerfile .
-        docker save pratiktech28/gprmax:latest > gprmax.tar
+      - name: Build Simulation Image
+        run: |
+          docker build -t gprmax-simulation:latest -f Docker/Dockerfile .
 
-    - name: Set up Kubernetes (Kind Cluster)
-      uses: helm/kind-action@v1.4.0
-      with:
-        cluster_name: gprmax-cluster
+      - name: Load Image and Set Context
+        run: |
+          kind load docker-image gprmax-simulation:latest --name gprmax-automation
+          kubectl cluster-info
 
-    - name: Load Image into Kind
-      run: kind load image-archive gprmax.tar --name gprmax-cluster
+      - name: Deploy gprMax
+        run: |
+          kubectl apply -f Kubernetes/
+          echo "Waiting for Simulation to initialize..."
+          sleep 60 
 
-    - name: Apply Kubernetes Config
-      run: |
-        kubectl apply -f Kubernetes/PV.yaml
-        kubectl apply -f Kubernetes/PVC.yaml
-        kubectl apply -f Kubernetes/main.yaml
-        kubectl apply -f Kubernetes/aggregator-job.yaml
-
-    - name: Buffer for Cluster Sync & Execution
-      run: |
-        echo "[*] Sleeping for 120s... to allow cluster to sync and jobs to start"
-        sleep 120
-
-    - name: Check Aggregator Status & Logs
-      run: |
-        echo "[*] Checking if Aggregator Pod is running..."
-        kubectl get pods -l job-name=data-aggregator
-        kubectl logs job/data-aggregator || echo "Logs not available yet"
-
-    - name: Extract Results (The Shield)
-      if: success()
-      run: |
-        mkdir -p output_zip
-        echo "[*] Initializing Polling Loop for Distributed Data..."
-        
-        for i in {1..120}; do
-          echo "[*] Checking for final_summary.csv... (Attempt $i/120)"
+      - name: Final Smash - Scan and Force Extract
+        run: |
+          mkdir -p results_temp
           
-          POD_NAME=$(kubectl get pods -l job-name=data-aggregator -o jsonpath='{.items[0].metadata.name}')
-          
-          if [ ! -z "$POD_NAME" ] && kubectl exec $POD_NAME -- ls /data/final_summary.csv > /dev/null 2>&1; then
-            echo "[+] SUCCESS: Data found! Commencing extraction..."
-            
-            kubectl cp $POD_NAME:/data/final_summary.csv ./output_zip/final_summary.csv
-            kubectl cp $POD_NAME:/data/simulation_registry.db ./output_zip/simulation_registry.db
-            
-            echo "[+] Extraction Complete. Files staged for upload."
-            exit 0
-          fi
-          
-          echo "[!] Simulation still in progress or database locked. Sleeping for 20s..."
-          sleep 20
-        done
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: artifact-exporter
+          spec:
+            containers:
+            - name: exporter
+              image: busybox
+              command: ["/bin/sh", "-c", "sleep 3600"]
+              volumeMounts:
+              - name: storage
+                mountPath: /data_mount
+            volumes:
+            - name: storage
+              persistentVolumeClaim:
+                claimName: gprmax-pvc
+            restartPolicy: Never
+          EOF
 
-        echo "[-] ERROR: Timeout reached after 120 attempts. Artifacts not found."
-        exit 1
+          echo "Waiting for exporter pod..."
+          kubectl wait --for=condition=Ready pod/artifact-exporter --timeout=90s
 
-    - name: 📦 Upload Simulation Artifacts
-      if: success()
-      uses: actions/upload-artifact@v4
-      with:
-        name: gprmax-simulation-results
-        path: output_zip/
+          echo "Scanning PVC for any .db or .csv files..."
+          kubectl exec artifact-exporter -- chmod -R 777 /data_mount
+          kubectl exec artifact-exporter -- ls -R /data_mount
+          
+          echo "Copying entire data directory to avoid path errors..."
+          kubectl cp artifact-exporter:/data_mount/. ./results_temp
+          
+          kubectl delete pod artifact-exporter
+          
+          echo "Files Found in Runner:"
+          find ./results_temp -type f
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: gprMax-Simulation-Results
+          path: results_temp/  
